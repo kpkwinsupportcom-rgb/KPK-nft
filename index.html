@@ -1,0 +1,1074 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KPK NFT - Production Build</title>
+    <style>
+        /* ==========================================
+           CORE ARCHITECTURE & DESIGN SYSTEM SPEC
+           ========================================== */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background-color: #070b14;
+            color: #f1f5f9;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            padding: 15px;
+            max-width: 450px;
+            margin: 0 auto;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* SCROLLBAR REFINEMENT LAYER */
+        ::-webkit-scrollbar {
+            width: 4px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #020617;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #1e293b;
+            border-radius: 10px;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        /* GLASS CONTAINERS */
+        .glass {
+            background: #0f172a;
+            border: 1px solid #1e293b;
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 15px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 8px 10px -6px rgba(0, 0, 0, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .glass::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.05), transparent);
+        }
+
+        /* TYPOGRAPHY ENGINE */
+        h1 {
+            font-size: 38px;
+            font-weight: 900;
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            text-align: center;
+        }
+
+        h2 { font-size: 22px; font-weight: 800; letter-spacing: -0.5px; }
+        h3 { font-size: 16px; font-weight: 700; }
+        h4 { font-size: 14px; font-weight: 600; }
+        
+        .text-blue { color: #3b82f6; }
+        .text-green { color: #10b981; }
+        .text-yellow { color: #f59e0b; }
+        .text-red { color: #ef4444; }
+        .text-purple { color: #a855f7; }
+        .text-center { text-align: center; }
+        .text-xs { font-size: 11px; color: #94a3b8; }
+        .text-sm { font-size: 13px; color: #cbd5e1; }
+
+        /* FORM FIELD LAYER */
+        label {
+            display: block;
+            font-size: 11px;
+            color: #94a3b8;
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            padding-left: 2px;
+        }
+
+        input, select {
+            width: 100%;
+            background-color: #020617;
+            border: 1px solid #334155;
+            border-radius: 12px;
+            padding: 14px;
+            font-size: 13px;
+            color: white;
+            margin-bottom: 16px;
+            outline: none;
+            transition: all 0.2s ease;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        input:focus, select:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15), inset 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        /* INTERACTION / BUTTON ENGINE */
+        button {
+            width: 100%;
+            padding: 14px;
+            border-radius: 14px;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        button:active {
+            transform: scale(0.97);
+        }
+
+        .btn-blue { background: linear-gradient(90deg, #3b82f6, #4f46e5); color: white; box-shadow: 0 4px 12px rgba(59,130,246,0.3); }
+        .btn-green { background: linear-gradient(90deg, #10b981, #059669); color: white; box-shadow: 0 4px 12px rgba(16,185,129,0.3); }
+        .btn-amber { background: linear-gradient(90deg, #f59e0b, #d97706); color: #020617; font-weight: 800; box-shadow: 0 4px 12px rgba(245,158,11,0.3); }
+        .btn-outline { background: transparent; border: 1px solid #334155; color: #10b981; }
+        .btn-outline:hover { background: rgba(16,185,129,0.05); }
+        
+        .btn-back {
+            background: #1e293b;
+            color: #cbd5e1;
+            border: none;
+            padding: 6px 14px;
+            font-size: 11px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 700;
+            width: auto;
+        }
+
+        /* TRANSACTION HUD QUICK LINKS */
+        .action-btn-container {
+            display: flex;
+            gap: 12px;
+            margin-top: 15px;
+            width: 100%;
+        }
+        .btn-action-dep { background: #eab308; color: #020617; padding: 10px; font-size: 12px; border-radius: 10px; box-shadow: 0 4px 10px rgba(234,179,8,0.2); }
+        .btn-action-wit { background: #ef4444; color: white; padding: 10px; font-size: 12px; border-radius: 10px; box-shadow: 0 4px 10px rgba(239,68,68,0.2); }
+
+        /* PORTAL OVERLAY CONTAINER STYLES */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(2, 6, 23, 0.85);
+            backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            z-index: 9999;
+        }
+
+        .modal-content {
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 24px;
+            width: 100%;
+            max-width: 400px;
+            padding: 22px;
+            max-height: 85vh;
+            overflow-y: auto;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6);
+            position: relative;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #1e293b;
+            padding-bottom: 14px;
+            margin-bottom: 18px;
+        }
+
+        .modal-close-btn {
+            background: #1e293b;
+            color: #ef4444;
+            border: none;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            font-size: 14px;
+            cursor: pointer;
+            font-weight: 700;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* SYSTEM CORE LOADER SPLASH SCREEN */
+        .loader-container {
+            width: 160px;
+            background: #020617;
+            height: 6px;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-top: 20px;
+            position: relative;
+        }
+        .loader-bar {
+            width: 45%;
+            height: 100%;
+            background: linear-gradient(90deg, #3b82f6, #60a5fa);
+            border-radius: 10px;
+            animation: slide 1.6s infinite cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        @keyframes slide {
+            0 { transform: translateX(-100%); }
+            100% { transform: translateX(250%); }
+        }
+
+        /* HEADER & DASHBOARD LAYOUTS */
+        .top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            width: 100%;
+        }
+
+        .icon-btn {
+            width: 44px;
+            height: 44px;
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 12px;
+            color: #3b82f6;
+            font-size: 16px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .icon-btn-pkg { background: #f59e0b; color: #020617; font-weight: 800; margin-right: 6px; }
+        .icon-btn-chat { background: #3b82f6; color: white; margin-right: 6px; font-size: 18px; }
+        
+        .flex-row { display: flex; gap: 4px; align-items: center; }
+
+        .promo-box {
+            background: linear-gradient(135deg, #0a192f, #020617);
+            border: 1px solid rgba(59, 130, 246, 0.2);
+            border-radius: 18px;
+            padding: 16px;
+            margin-bottom: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-cols: 1fr 1fr;
+            gap: 12px;
+        }
+
+        /* SCROLL ENGINE FOR 30 PACKAGES */
+        .packages-scroll-list {
+            max-height: 460px;
+            overflow-y: auto;
+            padding-right: 6px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .package-item {
+            background: #0b1329;
+            border: 1px solid #1e293b;
+            padding: 15px;
+            border-radius: 14px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: border-color 0.2s;
+        }
+        .package-item:hover { border-color: #334155; }
+        .package-meta { display: flex; gap: 14px; margin-top: 6px; font-size: 11px; }
+        .btn-stake { width: auto; padding: 8px 16px; font-size: 11px; text-transform: uppercase; border-radius: 10px; }
+
+        /* INTEGRATED REVENUE QR SYSTEM */
+        .qr-display-box {
+            background: white;
+            padding: 12px;
+            border-radius: 16px;
+            width: 170px;
+            height: 170px;
+            margin: 12px auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+        }
+        .qr-display-box img { width: 100%; height: 100%; object-fit: contain; }
+
+        /* LIST CONTROL PANEL */
+        .menu-list-btn {
+            background: #0f172a;
+            border: 1px solid #1e293b;
+            padding: 16px;
+            border-radius: 14px;
+            text-align: left;
+            margin-bottom: 10px;
+            color: #cbd5e1;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        /* FLOATING CHAT SHELL */
+        .floating-help-btn {
+            background: linear-gradient(135deg, #0088cc, #006699);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            font-size: 12px;
+            border-radius: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            font-weight: 700;
+            box-shadow: 0 6px 20px rgba(0,136,204,0.4);
+            margin: 20px auto 5px auto;
+            width: auto;
+        }
+
+        .chat-history-container {
+            background: #020617;
+            border: 1px solid #1e293b;
+            border-radius: 14px;
+            height: 220px;
+            overflow-y: auto;
+            padding: 12px;
+            margin-bottom: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .chat-bubble {
+            padding: 10px 14px;
+            border-radius: 12px;
+            max-width: 85%;
+            font-size: 12px;
+            line-height: 1.4;
+            word-break: break-word;
+        }
+        .bubble-user { background: #1e293b; align-self: flex-start; color: white; border-bottom-left-radius: 2px; }
+        .bubble-admin { background: #3b82f6; align-self: flex-end; color: white; border-bottom-right-radius: 2px; }
+
+        /* BROADCAST NOTIFICATION MODAL SYSTEM */
+        .notice-ad-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(2, 6, 23, 0.95);
+            display: flex;
+            flex-direction: column;
+            z-index: 10000;
+            padding: 20px;
+            overflow-y: auto;
+        }
+        .notice-ad-header {
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 25px;
+            width: 100%;
+            max-width: 450px;
+            margin: 0 auto 20px auto;
+        }
+        .notice-ad-close {
+            background: #ef4444;
+            color: white;
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            font-size: 20px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(239,68,68,0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .notice-ad-card {
+            background: linear-gradient(145deg, #0f172a, #020617);
+            border: 2px solid #ef4444;
+            border-radius: 28px;
+            padding: 30px 22px;
+            width: 100%;
+            max-width: 450px;
+            margin: 0 auto;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.8);
+            text-align: center;
+        }
+
+        /* AUDIT ENGINE AND LOG BOX DESIGN */
+        .history-list-box {
+            background: #020617;
+            border: 1px solid #1e293b;
+            border-radius: 14px;
+            max-height: 180px;
+            overflow-y: auto;
+            padding: 10px;
+            margin-top: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .history-item {
+            background: #0f172a;
+            border: 1px solid #334155;
+            padding: 10px;
+            border-radius: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 12px;
+        }
+        .status-badge-pending { color: #f59e0b; font-weight: 700; }
+        .status-badge-approved { color: #10b981; font-weight: 700; }
+        .status-badge-rejected { color: #ef4444; font-weight: 700; }
+    </style>
+</head>
+<body>
+
+    <div id="modal-notice-ad-screen" class="notice-ad-overlay hidden">
+        <div class="notice-ad-header">
+            <button class="notice-ad-close" onclick="closeModalView('modal-notice-ad-screen')">✕</button>
+        </div>
+        <div class="notice-ad-card">
+            <div style="background: rgba(239, 68, 68, 0.1); width: 64px; height: 64px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px auto; border: 1px solid #ef4444;">
+                <span class="text-red" style="font-size: 26px;">📢</span>
+            </div>
+            <h2 class="text-red" style="font-size: 20px; font-weight: 900; letter-spacing: 1px; margin-bottom: 18px;">ADMIN GLOBAL ANNOUNCEMENT</h2>
+            <div style="background: #020617; border: 1px solid #1e293b; padding: 16px; border-radius: 16px; text-align: left; margin-bottom: 24px;">
+                <p id="render-global-ad-text" style="font-size: 13px; line-height: 1.6; color: #cbd5e1; white-space: pre-wrap;">Welcome to KPK NFT Ecosystem Node network. Dynamic administrative directives will appear live here.</p>
+            </div>
+            <button onclick="closeModalView('modal-notice-ad-screen')" class="btn-blue" style="background: linear-gradient(90deg, #ef4444, #b91c1c);">ACKNOWLEDGE & CLOSE</button>
+        </div>
+    </div>
+
+    <div id="modal-chat-popup" class="modal-overlay hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="text-blue" style="font-size: 14px; font-weight: bold;">LIVE HELPLINE CHAT SUPPORT</h4>
+                <button onclick="closeModalView('modal-chat-popup')" class="modal-close-btn">✕</button>
+            </div>
+            <div id="chat-messages-container" class="chat-history-container"></div>
+            <div style="display: flex; flex-direction: column; gap: 12px;">
+                <input type="text" id="chat-input-user-message" placeholder="Type support message here..." style="margin-bottom: 0;">
+                <button onclick="sendLiveChatMessageWorkflow()" class="btn-blue">SEND TO ADMINISTRATIVE QUEUE</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="screen-loading" style="display: flex; flex-direction: column; justify-content: center; flex: 1; align-items: center;">
+        <h1 class="text-blue">KPK NFT</h1>
+        <p class="text-xs text-center" style="margin-top: 12px; letter-spacing: 0.5px;">Loading Secure Node Network...</p>
+        <div class="loader-container">
+            <div class="loader-bar"></div>
+        </div>
+    </div>
+
+    <div id="screen-auth-choice" class="hidden" style="flex-direction: column; justify-content: center; flex: 1;">
+        <h1 style="color: white; margin-bottom: 12px;">KPK NFT</h1>
+        <p class="text-xs text-center" style="margin-bottom: 35px; color:#64748b;">Kindly choose an option to access your gateway</p>
+        <div class="glass">
+            <button onclick="changeActiveView('screen-login')" class="btn-blue" style="margin-bottom: 14px;">SIGN IN ACCOUNT</button>
+            <button onclick="changeActiveView('screen-signup')" class="btn-outline">CREATE NEW ACCOUNT</button>
+        </div>
+        <button onclick="openModalView('modal-chat-popup')" class="floating-help-btn">💬 Help Live Support</button>
+    </div>
+
+    <div id="screen-login" class="hidden" style="flex-direction: column; justify-content: center; flex: 1;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid #1e293b; padding-bottom: 12px;">
+            <h2 style="font-size: 18px;" class="text-blue">ACCOUNT LOGIN</h2>
+            <button onclick="changeActiveView('screen-auth-choice')" class="btn-back">BACK</button>
+        </div>
+        <div class="glass">
+            <label>Username</label>
+            <input type="text" id="login-input-username" placeholder="Enter username">
+            <label>Password</label>
+            <input type="password" id="login-input-password" placeholder="Enter login password">
+            <button onclick="handleLoginAction()" class="btn-blue" style="margin-top: 10px;">VERIFY & LOGIN</button>
+        </div>
+        <button onclick="openModalView('modal-chat-popup')" class="floating-help-btn">💬 Need Help?</button>
+    </div>
+
+    <div id="screen-signup" class="hidden" style="flex-direction: column; justify-content: center; flex: 1;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid #1e293b; padding-bottom: 12px;">
+            <h2 style="font-size: 18px;" class="text-green">REGISTRATION</h2>
+            <button onclick="changeActiveView('screen-auth-choice')" class="btn-back">BACK</button>
+        </div>
+        <div class="glass">
+            <label>Choose Username</label>
+            <input type="text" id="signup-input-username" placeholder="Create unique username">
+            <label>Create Login Password</label>
+            <input type="password" id="signup-input-password" placeholder="Minimum 6 characters">
+            <label>Set Secure drawal PIN</label>
+            <input type="password" id="signup-input-draw-pin" maxlength="6" placeholder="6-Digit security PIN">
+            <p class="text-xs text-center" style="margin-bottom: 16px; font-style: italic; color: #64748b;">Note: User data structure is piped for Admin Panel sync.</p>
+            <button onclick="handleSignupAction()" class="btn-green">REGISTER TO ADMIN PANEL</button>
+        </div>
+    </div>
+
+    <div id="screen-dashboard" class="hidden" style="flex-direction: column; gap: 16px;">
+        <div class="glass" style="margin-bottom: 0; display: flex; flex-direction: column;">
+            <div class="top-bar">
+                <div>
+                    <p class="text-xs" style="text-transform: uppercase; font-weight: bold; color: #64748b;">Top Balance Matrix</p>
+                    <p class="text-green" style="font-size: 28px; font-weight: 900; margin-top: 6px;">$<span id="stat-wallet-balance">0.00</span></p>
+                </div>
+                <div class="flex-row">
+                    <button onclick="openModalView('modal-chat-popup')" class="icon-btn icon-btn-chat" title="Live Support Helpline">💬</button>
+                    <button onclick="changeActiveView('screen-packages')" class="icon-btn icon-btn-pkg">P</button>
+                    <button onclick="changeActiveView('screen-profile')" class="icon-btn">⚙</button>
+                </div>
+            </div>
+            <div class="action-btn-container">
+                <button onclick="openModalView('modal-deposit-popup')" class="btn-action-dep">DEPOSIT</button>
+                <button onclick="openModalView('modal-draw-popup')" class="btn-action-wit">DRAW</button>
+            </div>
+        </div>
+
+        <div class="promo-box">
+            <span style="background: rgba(59,130,246,0.1); border: 1px solid #3b82f6; border-radius: 20px; font-size: 9px; padding: 3px 10px; font-weight: bold;" class="text-blue">EARNING RULES MATRIX</span>
+            <h3 style="font-size: 14px; font-weight: bold; margin-top: 12px; margin-bottom: 6px;">Invite Friends & Secure Daily Salaries</h3>
+            <p class="text-xs" style="line-height: 1.6; color:#94a3b8;">
+                Har 1 friend invite karne par paen <span class="text-green" style="font-weight: bold;">$0.10 daily salary</span> fixed. Staking pools give a fixed <span class="text-yellow" style="font-weight: bold;">1.5% daily return</span> on active nodes safely.
+            </p>
+        </div>
+
+        <div class="glass text-center" style="padding: 26px 20px;">
+            <h4 style="font-size: 13px; font-weight: bold; letter-spacing: 0.5px;" class="text-sm">PACKAGE PAYOUT NODE (1.5%)</h4>
+            <p class="text-xs" style="margin-top: 6px; margin-bottom: 18px; color: #64748b;">Apne active nodes ka daily staking profit yahan se collect/claim karen.</p>
+            <div style="background: #020617; border: 1px solid #1e293b; padding: 12px; border-radius: 12px; display: flex; justify-content: space-between; max-width: 220px; margin: 0 auto 18px auto; font-size: 13px; box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);">
+                <span style="color:#cbd5e1;">Reward:</span>
+                <span id="stat-claimable-pool" class="text-yellow" style="font-weight: bold;">+$0.00</span>
+            </div>
+            <button onclick="claimAccumulatedNodeYield()" class="btn-green" style="padding: 15px;">CLAIM REWARD</button>
+        </div>
+
+        <div class="grid-2">
+            <div class="glass text-center" style="padding: 14px 10px; margin:0;">
+                <p class="text-xs" style="color:#64748b; font-weight:700;">STAKED FUNDS</p>
+                <p id="stat-active-capital" class="text-blue" style="font-weight: 800; font-size: 16px; margin-top: 6px;">$0.00</p>
+            </div>
+            <div class="glass text-center" style="padding: 14px 10px; margin:0;">
+                <p class="text-xs" style="color:#64748b; font-weight:700;">DAILY STAKE REWARD</p>
+                <p id="stat-daily-salary" class="text-purple" style="font-weight: 800; font-size: 16px; margin-top: 6px;">$0.00</p>
+            </div>
+        </div>
+
+        <button onclick="openModalView('modal-chat-popup')" class="btn-blue" style="border-radius:16px; font-size:12px; padding:12px; background: linear-gradient(90deg, #1e1b4b, #312e81); box-shadow:none; border:1px solid #4338ca;">💬 Open Support Live Chat System</button>
+    </div>
+
+    <div id="modal-deposit-popup" class="modal-overlay hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="text-yellow" style="font-size: 14px; font-weight: bold;">USDT DEPOSIT TERMINAL</h4>
+                <button onclick="closeModalView('modal-deposit-popup')" class="modal-close-btn">✕</button>
+            </div>
+            <label>Select Network Protocol</label>
+            <select id="field-deposit-network" onchange="syncNetworkCryptoAddressView()">
+                <option value="BEP20">USDT (BNB Smart Chain BEP20)</option>
+                <option value="TRC20">USDT (Tron TRC20)</option>
+            </select>
+            <label class="text-center">Scan Secure QR Code</label>
+            <div class="qr-display-box">
+                <img id="render-gateway-qrcode" src="" alt="Deposit QR Node">
+            </div>
+            <div style="background: #020617; border: 1px solid #334155; padding: 14px; border-radius: 12px; text-align: center; margin-bottom: 18px; margin-top: 12px; box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);">
+                <p class="text-xs" style="margin-bottom: 6px; color:#64748b;">Wallet Address Target:</p>
+                <p id="field-crypto-address-string" class="text-blue" style="font-size: 11px; word-break: break-all; font-weight: bold; font-family: monospace; letter-spacing: 0.2px;"></p>
+                <button onclick="copyCryptoGatewayStringText()" class="btn-back" style="margin-top: 10px; width: auto; padding: 6px 16px; background:#1e293b;">Copy Address</button>
+            </div>
+            <label>Enter Deposit Amount ($)</label>
+            <input type="number" id="field-deposit-amount" min="10" max="10000" value="10">
+            <label>Upload Payment Receipt Screenshot</label>
+            <input type="file" id="field-deposit-screenshot" accept="image/*" style="background: transparent; border: none; padding: 6px 0; margin-bottom: 16px; color: #94a3b8; font-size: 12px; box-shadow:none;">
+            <button onclick="submitDepositFormWorkflow()" class="btn-amber" style="margin-bottom: 12px;">SUBMIT PAYMENT RECEIPT</button>
+            <button onclick="toggleHistoryBlockDisplay('deposit-history-block', 'deposit')" class="btn-outline" style="border-color:#eab308; color:#eab308; margin-bottom: 4px;">📁 VIEW DEPOSIT HISTORY</button>
+            <div id="deposit-history-block" class="history-list-box hidden"></div>
+        </div>
+    </div>
+
+    <div id="modal-draw-popup" class="modal-overlay hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="text-red" style="font-size: 14px; font-weight: bold;">REQUEST SETTLEMENT PAYOUT</h4>
+                <button onclick="closeModalView('modal-draw-popup')" class="modal-close-btn">✕</button>
+            </div>
+            <label>Select Payout Network</label>
+            <select id="drawal-network-select">
+                <option value="TRC20">USDT (Tron TRC20)</option>
+                <option value="BEP20">USDT (BNB Chain BEP20)</option>
+            </select>
+            <label>Target Crypto Address</label>
+            <input type="text" id="drawal-address-input" placeholder="Enter Address">
+            <label>Withdrawal Amount ($)</label>
+            <input type="number" id="drawal-amount-input" placeholder="Min $5">
+            <label>6-Digit PIN</label>
+            <input type="password" id="drawal-pin-input" maxlength="6" placeholder="PIN">
+            <button onclick="processWithdrawalRequest()" class="btn-blue" style="margin-bottom: 12px;">PROCESS DRAWAL</button>
+            <button onclick="toggleHistoryBlockDisplay('withdraw-history-block', 'withdraw')" class="btn-outline" style="border-color:#ef4444; color:#ef4444; margin-bottom: 4px;">📁 VIEW WITHDRAWAL HISTORY</button>
+            <div id="withdraw-history-block" class="history-list-box hidden"></div>
+        </div>
+    </div>
+
+    <div id="screen-profile" class="hidden" style="flex-direction: column; gap: 16px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #1e293b; padding-bottom: 12px;">
+            <h3 class="text-blue" style="font-size: 14px; font-weight: bold;">PROFILE CONFIGURATION</h3>
+            <button onclick="changeActiveView('screen-dashboard')" class="btn-back">BACK</button>
+        </div>
+        <div style="display: flex; flex-direction: column;">
+            <button onclick="toggleProfileSubBlock('block-change-username')" class="menu-list-btn">Change Username ➔</button>
+            <button onclick="toggleProfileSubBlock('block-change-login-pass')" class="menu-list-btn">Change Login Password ➔</button>
+            <button onclick="toggleProfileSubBlock('block-change-draw-pin')" class="menu-list-btn">Change drawal Password ➔</button>
+            <button onclick="toggleProfileSubBlock('block-invite-friend')" class="menu-list-btn"><span class="text-blue">Invite Friend</span> ➔</button>
+            <button onclick="toggleProfileSubBlock('block-invite-history')" class="menu-list-btn"><span class="text-purple">Invite History</span> ➔</button>
+        </div>
+        <div id="profile-sub-viewport" class="glass hidden">
+            <div id="block-change-username" class="hidden">
+                <h4 style="font-size: 12px; font-weight: bold; margin-bottom: 12px;">CHANGE ACCOUNT USERNAME</h4>
+                <input type="text" id="profile-new-username" placeholder="Input fresh tracking username">
+                <button onclick="alert('Username updated inside secure front layers.')" class="btn-blue">SAVE USERNAME</button>
+            </div>
+            <div id="block-change-login-pass" class="hidden">
+                <h4 style="font-size: 12px; font-weight: bold; margin-bottom: 12px;">MODIFY ACCOUNT PASSWORD</h4>
+                <input type="password" id="profile-new-password" placeholder="Input fresh authentication password">
+                <button onclick="alert('Authentication credentials changed successfully.')" class="btn-blue">MODIFY PASSWORD</button>
+            </div>
+            <div id="block-change-draw-pin" class="hidden">
+                <h4 style="font-size: 12px; font-weight: bold; margin-bottom: 12px;">MODIFY DRAWAL PIN</h4>
+                <input type="password" id="profile-new-pin" maxlength="6" placeholder="Input fresh 6-digit payment code">
+                <button onclick="alert('Ecosystem payment security PIN modified.')" class="btn-blue">LOCK PIN CODE</button>
+            </div>
+            <div id="block-invite-friend" class="hidden text-center">
+                <h4 class="text-blue" style="font-size: 12px; font-weight: bold; margin-bottom: 12px; text-align: left;">AFFILIATE GENERATION MATRIX</h4>
+                <input type="text" id="referral-link-display" readonly value="https://kpknft.com/register?ref=Yasir_Khan" style="text-align: center; color: #a855f7; font-weight: bold; font-family: monospace; background:#020617;">
+                <button onclick="navigator.clipboard.writeText(document.getElementById('referral-link-display').value); alert('Affiliation reference link copied.');" class="btn-blue">COPY AFFILIATION URL</button>
+            </div>
+            <div id="block-invite-history" class="hidden">
+                <h4 class="text-purple" style="font-size: 12px; font-weight: bold; margin-bottom: 12px;">YOUR INVITE HISTORY LOGS</h4>
+                <div style="background: #020617; border: 1px solid #1e293b; padding: 12px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <p style="font-size: 12px; font-weight: bold; color:white;">peer_user_77</p>
+                        <p style="font-size: 10px; color: #64748b; margin-top:2px;">Joined: 2026-05-25</p>
+                    </div>
+                    <span class="text-green" style="font-size: 12px; font-weight: bold;">+$0.10/Daily Fixed</span>
+                </div>
+            </div>
+        </div>
+        <button onclick="openModalView('modal-chat-popup')" class="menu-list-btn" style="background: linear-gradient(90deg, #0f172a, #1e293b); border-color: #3b82f6;"><span class="text-blue">🛡️ Core Help Desk Support Portal</span> ➔</button>
+    </div>
+
+    <div id="screen-packages" class="hidden" style="flex-direction: column; gap: 16px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #1e293b; padding-bottom: 12px;">
+            <h3 class="text-yellow" style="font-size: 14px; font-weight: bold;">30 NFT STAKING MODULES (1.5% Daily)</h3>
+            <button onclick="changeActiveView('screen-dashboard')" class="btn-back">BACK</button>
+        </div>
+        <div id="packages-list-viewport" class="packages-scroll-list"></div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyCXI5L8QWNc3TGfgM6XnkOCmQV5hYpHpgE",
+            authDomain: "kpknft.firebaseapp.com",
+            databaseURL: "https://kpknft-default-rtdb.firebaseio.com", 
+            projectId: "kpknft",
+            storageBucket: "kpknft.firebasestorage.app",
+            messagingSenderId: "692124550435",
+            appId: "1:692124550435:web:442117ddb378744f313896"
+        };
+        
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+        const db = firebase.database();
+
+        let localActiveSessionUser = "";
+        let globalLiveDailySalary = 0; 
+
+        const cryptoTargetBEP20 = "0xf895d69ed6fceb76423c3f45f54c7510f3c2a382";
+        const cryptoTargetTRC20 = "TUqB2smF6GMFoBeCcofG9gHuCu1MLTSdXd";
+
+        const qrImageBEP20 = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAKAAAACgCAYAAACLz9qnAAAABmJLR0QA/wD/AP+gvaeTAAABEUlEQVR42u3SQREAAAzEMJr5N7YVvHAwS6ChS7wSgKExABsaA7ChMQAbGgOwoTEAGxoDsKExABsaA7ChMQAbGgOwoTEAGxoDsKExABsaA7ChMQAbGgOwoTEAGxoDsKExABsaA7ChMQAbGgOwoTEAGxoDsKExABsaA7ChMQAbGgOwoTEAGxoDsKExABsaA7ChMQAbGgOwoTEAGxoDsKExABsaA7ChMQAbGgOwoTEAGxoDsKExABsaA7ChMQAbGgOwoTEAGxoDsKExABsaA7ChMQAbGgOwoTEAGxoDsKExABsaA7ChMQAbGgOwoTEAGxoDsKExABsaA7ChMQAbGgOwoTEAGxoDsKExABsaA7ChsaA7ChMQAbGgOwYfID3p9AAm7st7YAAAAASUVORK5CYII=";
+        const qrImageTRC20 = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAKAAAACgCAYAAACLz9qnAAAABmJLR0QA/wD/AP+gvaeTAAABEUlEQVR42u3SQREAAAzEMJr5N7YVvHAwS6ChS7wSgKExABsaA7ChMQAbGgOwoTEAGxoDsKExABsaA7ChMQAbGgOwoTEAGxoDsKExABsaA7ChMQAbGgOwoTEAGxoDsKExABsaA7ChMQAbGgOwoTEAGxoDsKExABsaA7ChMQAbGgOwoTEAGxoDsKExABsaA7ChMQAbGgOwoTEAGxoDsKExABsaA7ChMQAbGgOwoTEAGxoDsKExABsaA7ChMQAbGgOwoTEAGxoDsKExABsaA7ChMQAbGgOwoTEAGxoDsKExABsaA7ChMQAbGgOwoTEAGxoDsKExABsaA7ChMQAbGgOwoTEAGxoDsKExABsaA7ChsaA7ChMQAbGgOwYfID3p9AAm7st7YAAAAASUVORK5CYII=";
+
+        window.addEventListener('DOMContentLoaded', () => {
+            changeActiveView('screen-loading');
+            setTimeout(() => {
+                changeActiveView('screen-auth-choice');
+                triggerCrossTabNoticeListener();
+                build30NFTNodePackagesGrid();
+            }, 2500); 
+        });
+
+        function changeActiveView(targetViewId) {
+            const screens = ['screen-loading', 'screen-auth-choice', 'screen-login', 'screen-signup', 'screen-dashboard', 'screen-profile', 'screen-packages'];
+            screens.forEach(s => {
+                const el = document.getElementById(s);
+                if(el) el.style.setProperty('display', 'none', 'important');
+            });
+            const targetEl = document.getElementById(targetViewId);
+            if(targetEl) targetEl.style.setProperty('display', 'flex', 'important');
+        }
+
+        function openModalView(modalId) {
+            const modal = document.getElementById(modalId);
+            if(modal) {
+                modal.style.setProperty('display', 'flex', 'important');
+                if(modalId === 'modal-deposit-popup') syncNetworkCryptoAddressView(); 
+                if(modalId === 'modal-chat-popup') listenToLiveUserChatStream(); 
+            }
+        }
+
+        function closeModalView(modalId) {
+            const modal = document.getElementById(modalId);
+            if(modal) modal.style.setProperty('display', 'none', 'important');
+        }
+
+        function handleLoginAction() {
+            const user = document.getElementById('login-input-username').value.trim();
+            const pass = document.getElementById('login-input-password').value.trim();
+            
+            if(!user || !pass) return alert("Please enter username and password.");
+
+            db.ref('users/' + user).once('value').then(snapshot => {
+                if (snapshot.exists()) {
+                    const userData = snapshot.val();
+                    if (userData.password == pass) {
+                        localActiveSessionUser = user; 
+                        alert("Login Successful!");
+                        changeActiveView('screen-dashboard');
+                        
+                        db.ref('users/' + user).on('value', (snap) => {
+                            const data = snap.val() || {};
+                            const activeStakedFunds = parseFloat(data.staked || 0);
+                            
+                            if (activeStakedFunds > 0) {
+                                globalLiveDailySalary = activeStakedFunds * 0.015;
+                            } else {
+                                globalLiveDailySalary = parseFloat(data.dailySalary || 0);
+                            }
+                            
+                            document.getElementById('stat-wallet-balance').innerText = (data.balance || 0).toFixed(2);
+                            document.getElementById('stat-active-capital').innerText = "$" + activeStakedFunds.toFixed(2);
+                            document.getElementById('stat-daily-salary').innerText = "$" + globalLiveDailySalary.toFixed(2);
+                            document.getElementById('stat-claimable-pool').innerText = "+$" + globalLiveDailySalary.toFixed(2);
+                        });
+                    } else {
+                        alert("Invalid Password!");
+                    }
+                } else {
+                    alert("User not found!");
+                }
+            });
+        }
+
+        function handleSignupAction() {
+            const user = document.getElementById('signup-input-username').value.trim();
+            const pass = document.getElementById('signup-input-password').value.trim();
+            const pin = document.getElementById('signup-input-draw-pin').value.trim();
+
+            if(!user || !pass || !pin) return alert("Sabhi fields bharna lazmi hai!");
+            
+            db.ref('users/' + user).set({
+                username: user,
+                password: pass,
+                withdrawPass: pin,
+                balance: 0,
+                status: 'active',
+                inviteCount: 0,
+                dailySalary: 0, 
+                staked: 0, 
+                dailyYieldRate: 0, 
+                claimablePool: 0, 
+                totalDepositedAmount: 0,
+                totalWithdrawnAmount: 0
+            }).then(() => {
+                alert("Registration Successful! Ab Login karein.");
+                changeActiveView('screen-login');
+            }).catch(error => alert("Error: " + error.message));
+        }
+
+        // ==========================================
+        // FIXED REALTIME CHAT ENGINE LINKING CODE
+        // ==========================================
+        let isChatListenerActive = false;
+        function listenToLiveUserChatStream() {
+            const chatUserKey = localActiveSessionUser || 'Guest';
+            if(isChatListenerActive) return;
+            
+            isChatListenerActive = true;
+            db.ref('chats/' + chatUserKey).on('value', snapshot => {
+                const chatContainer = document.getElementById('chat-messages-container');
+                if(!chatContainer) return;
+                chatContainer.innerHTML = "";
+                
+                if(snapshot.exists()) {
+                    snapshot.forEach(child => {
+                        const m = child.val();
+                        const isMe = (m.sender !== 'admin');
+                        chatContainer.innerHTML += `
+                            <div class="chat-bubble ${isMe ? 'bubble-user' : 'bubble-admin'}">
+                                <b>${isMe ? 'You' : 'Admin'}:</b> ${m.message}
+                            </div>
+                        `;
+                    });
+                } else {
+                    chatContainer.innerHTML = `<div class="chat-bubble bubble-admin"><b>System:</b> Welcome to Live Helpline Support. How can we help you?</div>`;
+                }
+                chatContainer.scrollTop = chatContainer.scrollHeight;
+            });
+        }
+
+        function sendLiveChatMessageWorkflow() {
+            const msgInput = document.getElementById('chat-input-user-message');
+            if(!msgInput || !msgInput.value.trim()) return;
+            
+            const chatUserKey = localActiveSessionUser || 'Guest';
+            const textValue = msgInput.value.trim();
+            
+            db.ref('chats/' + chatUserKey).push({
+                sender: chatUserKey,
+                message: textValue,
+                timestamp: Date.now()
+            }).then(() => {
+                msgInput.value = "";
+            });
+        }
+
+        function toggleProfileSubBlock(activeSubBlockId) {
+            document.getElementById('profile-sub-viewport').style.setProperty('display', 'block', 'important');
+            const blocks = ['block-change-username', 'block-change-login-pass', 'block-change-draw-pin', 'block-invite-friend', 'block-invite-history'];
+            blocks.forEach(b => document.getElementById(b).style.setProperty('display', 'none', 'important'));
+            document.getElementById(activeSubBlockId).style.setProperty('display', 'block', 'important');
+        }
+
+        function syncNetworkCryptoAddressView() {
+            const netSelection = document.getElementById('field-deposit-network').value;
+            const addressStringBox = document.getElementById('field-crypto-address-string');
+            const qrImageBox = document.getElementById('render-gateway-qrcode');
+            
+            if(netSelection === "BEP20") {
+                addressStringBox.innerText = cryptoTargetBEP20;
+                qrImageBox.src = qrImageBEP20;
+            } else {
+                addressStringBox.innerText = cryptoTargetTRC20;
+                qrImageBox.src = qrImageTRC20;
+            }
+        }
+
+        function copyCryptoGatewayStringText() {
+            const str = document.getElementById('field-crypto-address-string').innerText;
+            navigator.clipboard.writeText(str);
+            alert("Wallet address copied.");
+        }
+
+        function submitDepositFormWorkflow() {
+            if(!localActiveSessionUser) return alert("Pehle Account Login karein!");
+            const val = document.getElementById('field-deposit-amount').value;
+            const network = document.getElementById('field-deposit-network').value;
+            if(val < 10) return alert("Minimum deposit $10.");
+
+            db.ref('depositRequests').push({
+                username: localActiveSessionUser,
+                amount: parseFloat(val),
+                network: network,
+                status: 'pending',
+                timestamp: Date.now()
+            }).then(() => {
+                alert("Deposit request submitted.");
+                closeModalView('modal-deposit-popup');
+            });
+        }
+
+        function build30NFTNodePackagesGrid() {
+            const targetGridBox = document.getElementById('packages-list-viewport');
+            targetGridBox.innerHTML = "";
+            const preciseStepsArray = [10, 20, 25, 50, 70, 100, 150, 200, 250, 300, 400, 500, 600, 700, 800, 1000, 1200, 1500, 1800, 2000, 2500, 3000, 4000, 5000, 6000, 7000, 8000, 8500, 9000, 10000];
+            
+            preciseStepsArray.forEach((cost, index) => {
+                let dailyReturn = (cost * 0.015).toFixed(2); 
+                targetGridBox.innerHTML += `
+                    <div class="package-item">
+                        <div>
+                            <p style="font-size:12px; font-weight:bold; color:white;">KPK NFT Tier ${index + 1}</p>
+                            <div class="package-meta">
+                                <span>Cost: <b class="text-blue">$${cost}</b></span>
+                                <span>Daily (1.5%): <b class="text-green">+$${dailyReturn}</b></span>
+                            </div>
+                        </div>
+                        <button onclick="commitPackagePurchase(${cost}, ${dailyReturn})" class="btn-amber btn-stake">Stake</button>
+                    </div>
+                `;
+            });
+        }
+
+        function commitPackagePurchase(costPrice, trackingYieldVal) {
+            if(!localActiveSessionUser) return alert("Pehle Apna Account Login Karein!");
+
+            db.ref('users/' + localActiveSessionUser).once('value').then(snapshot => {
+                const userData = snapshot.val();
+                const currentBalance = parseFloat(userData.balance || 0);
+                const currentStaked = parseFloat(userData.staked || 0);
+
+                if (currentStaked > 0 && costPrice <= currentStaked) {
+                    return alert("Aapke paas pehle se ek plan active hai!");
+                }
+                if (currentBalance < costPrice) {
+                    return alert("Aapka balance na-kafi hai!");
+                }
+
+                db.ref('users/' + localActiveSessionUser).update({
+                    balance: currentBalance - costPrice,
+                    staked: parseFloat(costPrice),
+                    dailyYieldRate: parseFloat(trackingYieldVal)
+                }).then(() => {
+                    alert("NFT Staking Package Successful!");
+                    changeActiveView('screen-dashboard');
+                });
+            });
+        }
+
+        function claimAccumulatedNodeYield() {
+            if(!localActiveSessionUser) return alert("Pehle Account Login Karein!");
+
+            db.ref('users/' + localActiveSessionUser).once('value').then(snapshot => {
+                const userData = snapshot.val();
+                if (!userData) return alert("User data not found!");
+
+                const todayDate = new Date().toDateString(); 
+                if (userData.lastClaimDate === todayDate) {
+                    return alert("Aap aaj ka reward pehle hi claim kar chuke hain! Kal dobara aayen.");
+                }
+
+                const currentBalance = parseFloat(userData.balance || 0);
+                const activeStaked = parseFloat(userData.staked || 0);
+                let dailySalaryRate = (activeStaked * 0.015);
+
+                if (dailySalaryRate <= 0) {
+                    return alert("Aapka reward balance zero hai!");
+                }
+
+                db.ref('users/' + localActiveSessionUser).update({
+                    balance: currentBalance + dailySalaryRate,
+                    lastClaimDate: todayDate,
+                    claimablePool: 0
+                }).then(() => {
+                    alert(`Kamyabi! Aapka Daily Reward ($${dailySalaryRate.toFixed(2)}) claim ho gaya.`);
+                    document.getElementById('stat-claimable-pool').innerText = "+$0.00";
+                });
+            });
+        }
+
+        function triggerCrossTabNoticeListener() {
+            db.ref('systemNotice').on('value', snapshot => {
+                if(snapshot.exists()) {
+                    document.getElementById('render-global-ad-text').innerText = snapshot.val().message;
+                    openModalView('modal-notice-ad-screen');
+                }
+            });
+        }
+
+        function processWithdrawalRequest() {
+            if(!localActiveSessionUser) return alert("Pehle Account Login Ofline karein!");
+            const amount = document.getElementById('drawal-amount-input').value;
+            const address = document.getElementById('drawal-address-input').value;
+            const inputPin = document.getElementById('drawal-pin-input').value;
+            const network = document.getElementById('drawal-network-select').value;
+
+            if(!amount || !address || !inputPin) return alert("Please fill all fields!");
+            
+            db.ref('users/' + localActiveSessionUser).once('value').then(snapshot => {
+                const userData = snapshot.val();
+                if (userData && userData.withdrawPass == inputPin) {
+                    if(parseFloat(userData.balance) < parseFloat(amount)) return alert("In-sufficient balance!");
+                    
+                    db.ref('users/' + localActiveSessionUser).update({
+                        balance: parseFloat(userData.balance) - parseFloat(amount)
+                    });
+
+                    db.ref('withdrawRequests').push({
+                        username: localActiveSessionUser,
+                        amount: parseFloat(amount),
+                        address: address,
+                        network: network,
+                        status: 'pending',
+                        timestamp: Date.now()
+                    }).then(() => {
+                        alert("Withdrawal request sent!");
+                        closeModalView('modal-draw-popup');
+                    });
+                } else {
+                    alert("Galat PIN!");
+                }
+            });
+        }
+
+        function toggleHistoryBlockDisplay(blockId, modeType) {
+            const blockEl = document.getElementById(blockId);
+            if(!localActiveSessionUser) return alert("Pehle Apna Account Login Karein!");
+
+            if(blockEl.classList.contains('hidden')) {
+                blockEl.classList.remove('hidden');
+                blockEl.innerHTML = `<p class="text-xs text-center" style="color:#64748b;">Loading active records...</p>`;
+                const targetNode = modeType === 'deposit' ? 'depositRequests' : 'withdrawRequests';
+                
+                db.ref(targetNode).orderByChild('username').equalTo(localActiveSessionUser).once('value').then(snapshot => {
+                    blockEl.innerHTML = "";
+                    if(snapshot.exists()) {
+                        snapshot.forEach(child => {
+                            const data = child.val();
+                            const requestDate = new Date(data.timestamp || Date.now()).toLocaleDateString();
+                            let badgeClass = data.status === 'approved' ? "status-badge-approved" : (data.status === 'rejected' ? "status-badge-rejected" : "status-badge-pending");
+
+                            blockEl.innerHTML += `
+                                <div class="history-item">
+                                    <div>
+                                        <span style="font-weight:bold; color:white;">$${parseFloat(data.amount).toFixed(2)}</span>
+                                        <span style="color:#64748b; margin-left:5px;">(${data.network})</span>
+                                        <p style="color:#475569; font-size:9px; margin-top:2px;">${requestDate}</p>
+                                    </div>
+                                    <span class="${badgeClass}">${data.status.toUpperCase()}</span>
+                                </div>
+                            `;
+                        });
+                    } else {
+                        blockEl.innerHTML = `<p class="text-xs text-center" style="color:#64748b;">No records found.</p>`;
+                    }
+                });
+            } else {
+                blockEl.classList.add('hidden');
+            }
+        }
+    </script>
+</body>
+</html>
